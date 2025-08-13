@@ -9,8 +9,9 @@ const UserSchema = mongoose.Schema(
       type: String,
       unique: true,
       match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/],
+      trim:true
     },
-    password: { type: String, required: true, minlength: 8, select: false },
+    password: { type: String, required: true, minlength: 8, select: false, trim:true },
     roles: [{ type: mongoose.Schema.Types.ObjectId, ref: "Role" }],
     permissions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Permission" }],
     isActive: { type: Boolean, default: true },
