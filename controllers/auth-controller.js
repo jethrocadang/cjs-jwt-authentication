@@ -2,8 +2,7 @@
 
 const bycrypt = require("bcryptjs");
 const { User } = require("../models");
-const jwt = require('../services/token-service')
-
+const jwt = require("../services/token-service");
 
 exports.login = async (req, res) => {
   try {
@@ -47,4 +46,15 @@ exports.login = async (req, res) => {
   }
 };
 
-exports.register;
+exports.register = async (req, res) => {
+  try {
+    const { firstName, lastName, email, password } = req.body;
+
+    const userExists = await User.findOne({ email });
+    if (userExists)
+      return res.status(400).json({ message: "Email already registered!" });
+
+    const hashed = bycrypt.hash(password, 12);
+    const user = await User.create({firstName, lastName, email, password:hashed})
+  } catch (error) {}
+};
