@@ -1,20 +1,9 @@
 // controllers/auth.controllers.js
 
 const bycrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
 const { User } = require("../models");
+const jwt = require('../services/token-service')
 
-const signAccessToken = (user) => {
-  return jwt.sign({ id: user._id }, process.env.JWT_ACCESS_TOKEN, {
-    expiresIn: "15m",
-  });
-};
-
-const signRefreshToken = (user) => {
-  return jwt.sign({ id: user._id }, process.env.JWT_REFRESH_TOKEN, {
-    expiresIn: "7d",
-  });
-};
 
 exports.login = async (req, res) => {
   try {
@@ -22,7 +11,7 @@ exports.login = async (req, res) => {
     const { email, password } = req.body;
 
     // Check if the user exists
-    const user = User.findOne({ email }).select("+password");
+    const user = await User.findOne({ email }).select("+password");
     if (!user) return res.status(401).json({ message: "Invalid Credentials!" });
 
     // Check if the password is correct
@@ -35,8 +24,8 @@ exports.login = async (req, res) => {
     user.save();
 
     // Sign JWT for the user
-    const accessToken = signAccessToken(user);
-    const refreshToken = signRefreshToken(user);
+    const accessToken = jwt.signAccessToken(user);
+    const refreshToken = jwt.signRefreshToken(user);
 
     // Send the refresh token through yummy HTTP-only cookies
     res.cookie("refreshToken", refreshToken, {
@@ -58,5 +47,4 @@ exports.login = async (req, res) => {
   }
 };
 
-
-exports.register
+exports.register;
