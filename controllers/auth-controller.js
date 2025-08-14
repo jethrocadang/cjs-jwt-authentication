@@ -1,10 +1,17 @@
 // controllers/auth.controllers.js
 
+//Packages
 const bycrypt = require("bcryptjs");
-const { User } = require("../models");
+
+// Services
 const jwtService = require("../services/token-service");
 const sendEmail = require("../services/email-service");
+
+// Utilities
 const verifyEmailTemplate = require("../utils/templates/verify-email-template");
+
+//Models
+const { User } = require("../models");
 
 exports.login = async (req, res) => {
   try {
@@ -81,14 +88,41 @@ exports.register = async (req, res) => {
     });
 
     // Success response
-    res
-      .status(201)
-      .json({
-        message: "User registered successfully. Check your email to verify.",
-      });
+    res.status(201).json({
+      message: "User registered successfully. Check your email to verify.",
+    });
   } catch (error) {
     // Error response
     console.error("Failed to register user:", error);
     res.status(500).json({ message: "Internal server error!" });
+  }
+};
+
+exports.verifyEmail = async (req, res) => {
+  try {
+    // Get the token from the URL
+    const { token } = req.query;
+
+    // Decode the token
+    const decoded = jwtService.verifyEmailToken(token);
+
+    // Get the user _id
+    const user = await User.findById(decoded.id);
+    // Check if exists
+    if (!user) return res.status(404).json({ message: "User not found!" });
+    // Check if verified
+    if (user.verified)
+      return res.status(400).json({ message: "User already verfied!" });
+
+    // Set status to verified if all checks passed.
+    user.verified = true
+    await user.save();
+
+    //Success response.
+    res.json({message: "Email successfull verified!"})
+  } catch (error) {
+    //Error response
+    console.error("[controllers/auth-controller.js] Email verification failed:", error)
+    res.status(500).json({message: "Internal server error!"})
   }
 };

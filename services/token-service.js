@@ -14,11 +14,11 @@ const signRefreshToken = (user) => {
   });
 };
 
-const verifyAccessToken = () => {
+const verifyAccessToken = (token) => {
   return jwt.verify(token, process.env.JWT_ACCESS_TOKEN);
 };
 
-const verifyRefreshToken = () => {
+const verifyRefreshToken = (token) => {
   return jwt.verify(token, process.env.JWT_REFRESH_TOKEN);
 };
 
@@ -28,7 +28,7 @@ const signEmailToken = (user) => {
   });
 };
 
-const verifyEmailToken = () => {
+const verifyEmailToken = (token) => {
   return jwt.verify(token, process.env.JWT_REFRESH_TOKEN);
 };
 
