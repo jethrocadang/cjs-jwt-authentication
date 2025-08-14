@@ -1,5 +1,7 @@
 //app.js
 
+require("dotenv").config({debug: true});
+
 //Packages
 const express = require("express");
 const cors = require("cors");
@@ -7,10 +9,9 @@ const cookieParser = require("cookie-parser");
 
 //Config
 const connectDB = require("./config/database");
-require("dotenv").config();
 
 // Routes import
-const authRoutes = require("./controllers/auth-controller");
+const authRoutes = require("./routes/auth-routes");
 
 connectDB();
 const app = express();
@@ -27,7 +28,7 @@ app.get("/", (req, res) => {
 });
 
 //Routes
-app.use("api/v1/auth", authRoutes);
+app.use("/api/v1/auth", authRoutes);
 
 app.listen(port, () => {
   console.log(`Project Zero Express: Listening on port ${port}`);

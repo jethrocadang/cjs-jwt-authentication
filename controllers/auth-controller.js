@@ -65,7 +65,7 @@ exports.register = async (req, res) => {
       return res.status(400).json({ message: "Email already registered!" });
 
     // Hash the password salted with 12 characters
-    const hashed = bycrypt.hash(password, 12);
+    const hashed = await bycrypt.hash(password, 12);
 
     // Create the user
     const user = await User.create({
@@ -76,7 +76,7 @@ exports.register = async (req, res) => {
     });
 
     // Create token for verification of email
-    const token = jwtService.signEmailtoken(user);
+    const token = jwtService.signEmailToken(user);
     // Create verify email link
     const link = `${process.env.FRONTEND_URL}/verify-email?token=${token}`;
     // Send the verify email
@@ -94,7 +94,7 @@ exports.register = async (req, res) => {
   } catch (error) {
     // Error response
     console.error("Failed to register user:", error);
-    res.status(500).json({ message: "Internal server error!" });
+    res.status(500).json({ message: "Internal server error!", error: error });
   }
 };
 
@@ -102,6 +102,8 @@ exports.verifyEmail = async (req, res) => {
   try {
     // Get the token from the URL
     const { token } = req.query;
+
+    if(!token) return res.status(404).json({message: "Token not found!"})
 
     // Decode the token
     const decoded = jwtService.verifyEmailToken(token);

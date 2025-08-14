@@ -1,6 +1,6 @@
 // services/token-service.js
 
-const jwt = require("/jsonwebtoken");
+const jwt = require("jsonwebtoken");
 
 const signAccessToken = (user) => {
   return jwt.sign({ id: user._id }, process.env.JWT_ACCESS_TOKEN, {
@@ -35,6 +35,8 @@ const verifyEmailToken = (token) => {
 module.exports = {
   signAccessToken,
   signRefreshToken,
+  signEmailToken,
   verifyAccessToken,
   verifyRefreshToken,
+  verifyEmailToken
 };
