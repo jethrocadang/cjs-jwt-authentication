@@ -2,7 +2,9 @@
 
 const bycrypt = require("bcryptjs");
 const { User } = require("../models");
-const jwt = require("../services/token-service");
+const jwtService = require("../services/token-service");
+const sendEmail = require("../services/email-service");
+const verifyEmailTemplate = require("../utils/templates/verify-email-template");
 
 exports.login = async (req, res) => {
   try {
@@ -23,8 +25,8 @@ exports.login = async (req, res) => {
     user.save();
 
     // Sign JWT for the user
-    const accessToken = jwt.signAccessToken(user);
-    const refreshToken = jwt.signRefreshToken(user);
+    const accessToken = jwtService.signAccessToken(user);
+    const refreshToken = jwtService.signRefreshToken(user);
 
     // Send the refresh token through yummy HTTP-only cookies
     res.cookie("refreshToken", refreshToken, {
@@ -50,11 +52,43 @@ exports.register = async (req, res) => {
   try {
     const { firstName, lastName, email, password } = req.body;
 
+    // Check if email exists
     const userExists = await User.findOne({ email });
     if (userExists)
       return res.status(400).json({ message: "Email already registered!" });
 
+    // Hash the password salted with 12 characters
     const hashed = bycrypt.hash(password, 12);
-    const user = await User.create({firstName, lastName, email, password:hashed})
-  } catch (error) {}
+
+    // Create the user
+    const user = await User.create({
+      firstName,
+      lastName,
+      email,
+      password: hashed,
+    });
+
+    // Create token for verification of email
+    const token = jwtService.signEmailtoken(user);
+    // Create verify email link
+    const link = `${process.env.FRONTEND_URL}/verify-email?token=${token}`;
+    // Send the verify email
+    await sendEmail({
+      to: email,
+      subject: "Verify Your Email",
+      text: `Click the link to verify your email: ${link}`,
+      html: verifyEmailTemplate({ firstName, link }),
+    });
+
+    // Success response
+    res
+      .status(201)
+      .json({
+        message: "User registered successfully. Check your email to verify.",
+      });
+  } catch (error) {
+    // Error response
+    console.error("Failed to register user:", error);
+    res.status(500).json({ message: "Internal server error!" });
+  }
 };

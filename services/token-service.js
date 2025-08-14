@@ -22,6 +22,16 @@ const verifyRefreshToken = () => {
   return jwt.verify(token, process.env.JWT_REFRESH_TOKEN);
 };
 
+const signEmailToken = (user) => {
+  return jwt.sign({ id: user._id }, process.env.JWT_REFRESH_TOKEN, {
+    expiresIn: "15m",
+  });
+};
+
+const verifyEmailToken = () => {
+  return jwt.verify(token, process.env.JWT_REFRESH_TOKEN);
+};
+
 module.exports = {
   signAccessToken,
   signRefreshToken,
