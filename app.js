@@ -9,6 +9,8 @@ const cookieParser = require("cookie-parser");
 
 //Config
 const connectDB = require("./config/database");
+
+// ?Check if redis is connected
 const redis = require("./services/perm-cache")
 
 // Routes import
