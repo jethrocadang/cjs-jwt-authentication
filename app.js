@@ -9,11 +9,13 @@ const cookieParser = require("cookie-parser");
 
 //Config
 const connectDB = require("./config/database");
+const redis = require("./services/perm-cache")
 
 // Routes import
 const authRoutes = require("./routes/auth-routes");
 
 connectDB();
+redis.checkRedisConnection()
 const app = express();
 const port = process.env.PORT || 3000;
 
