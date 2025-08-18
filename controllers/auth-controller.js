@@ -103,7 +103,7 @@ exports.verifyEmail = async (req, res) => {
     // Get the token from the URL
     const { token } = req.query;
 
-    if(!token) return res.status(404).json({message: "Token not found!"})
+    if (!token) return res.status(404).json({ message: "Token not found!" });
 
     // Decode the token
     const decoded = jwtService.verifyEmailToken(token);
@@ -117,14 +117,87 @@ exports.verifyEmail = async (req, res) => {
       return res.status(400).json({ message: "User already verfied!" });
 
     // Set status to verified if all checks passed.
-    user.verified = true
+    user.verified = true;
     await user.save();
 
     //Success response.
-    res.json({message: "Email successfull verified!"})
+    res.json({ message: "Email successfull verified!" });
   } catch (error) {
     //Error response
-    console.error("[controllers/auth-controller.js] Email verification failed:", error)
-    res.status(500).json({message: "Internal server error!"})
+    console.error(
+      "[controllers/auth-controller.js] Email verification failed:",
+      error
+    );
+    res.status(500).json({ message: "Internal server error!" });
   }
 };
+
+exports.refreshToken = async (req, res) => {
+  try {
+    const refreshToken = req.cookies?.refreshToken;
+
+    if (!refreshToken) {
+      return res.status(401).json({ message: "Token not found!" });
+    }
+
+    // 1. Verify refresh token
+    const decoded = jwtService.verifyRefreshToken(refreshToken);
+
+    if (!decoded) {
+      return res.status(403).json({ message: "Invalid or expired token!" });
+    }
+
+    // 2. (Optional but recommended) Check against DB/whitelist
+    // Example if you store refresh tokens in DB:
+    // const storedToken = await RefreshTokenModel.findOne({ token: refreshToken });
+    // if (!storedToken) return res.status(403).json({ message: "Token revoked" });
+
+    // 3. Generate new tokens
+    const newAccessToken = jwtService.signAccessToken({ _id: decoded.sub });
+    const newRefreshToken = jwtService.signRefreshToken({ _id: decoded.sub });
+
+    // 4. (Optional) Delete old refresh token & store new one in DB
+    // await RefreshTokenModel.deleteOne({ token: refreshToken });
+    // await RefreshTokenModel.create({ token: newRefreshToken, user: decoded.sub });
+
+    // 5. Send tokens
+    res.cookie("refreshToken", newRefreshToken, {
+      httpOnly: true,       // prevents JS access
+      secure: true,         // send only over HTTPS
+      sameSite: "strict",   // CSRF protection
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
+    return res.json({
+      accessToken: newAccessToken,
+      message: "Token refreshed successfully",
+    });
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+exports.logout = async (req, res) => {
+  try {
+    const refreshToken = req.cookies?.refreshToken;
+    if (refreshToken) {
+      // Remove refresh token from DB
+      await RefreshTokenModel.deleteOne({ token: refreshToken });
+    }
+
+    // Clear cookie
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: true,
+      sameSite: "strict",
+    });
+
+    return res.json({ message: "Logged out successfully" });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
