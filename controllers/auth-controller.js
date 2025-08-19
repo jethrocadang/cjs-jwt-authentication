@@ -9,6 +9,9 @@ const sendEmail = require("../services/email-service");
 
 // Utilities
 const verifyEmailTemplate = require("../utils/templates/verify-email-template");
+const {
+  setRefreshTokenCookie,
+} = require("../utils/utility/refresh-token-cookie");
 
 //Models
 const { User } = require("../models");
@@ -36,12 +39,7 @@ exports.login = async (req, res) => {
     const refreshToken = jwtService.signRefreshToken(user);
 
     // Send the refresh token through yummy HTTP-only cookies
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      samesite: "strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    setRefreshTokenCookie(res, refreshToken);
 
     // Send back the user info!
     res.json({
@@ -134,45 +132,35 @@ exports.verifyEmail = async (req, res) => {
 
 exports.refreshToken = async (req, res) => {
   try {
+
+    // Get the refresh token from the http-only cookies
     const refreshToken = req.cookies?.refreshToken;
 
+    // If the refresh token is not found throw an error
     if (!refreshToken) {
       return res.status(401).json({ message: "Token not found!" });
     }
 
-    // 1. Verify refresh token
+    // Verify the token through the token service
     const decoded = jwtService.verifyRefreshToken(refreshToken);
 
+    // Check if the decoded token is valid 
     if (!decoded) {
       return res.status(403).json({ message: "Invalid or expired token!" });
     }
 
-    // 2. (Optional but recommended) Check against DB/whitelist
-    // Example if you store refresh tokens in DB:
-    // const storedToken = await RefreshTokenModel.findOne({ token: refreshToken });
-    // if (!storedToken) return res.status(403).json({ message: "Token revoked" });
-
-    // 3. Generate new tokens
+    // Create new tokens access and refresh
     const newAccessToken = jwtService.signAccessToken({ _id: decoded.sub });
     const newRefreshToken = jwtService.signRefreshToken({ _id: decoded.sub });
 
-    // 4. (Optional) Delete old refresh token & store new one in DB
-    // await RefreshTokenModel.deleteOne({ token: refreshToken });
-    // await RefreshTokenModel.create({ token: newRefreshToken, user: decoded.sub });
+    // Set the refresh token in cookie
+    setRefreshTokenCookie(res, newRefreshToken);
 
-    // 5. Send tokens
-    res.cookie("refreshToken", newRefreshToken, {
-      httpOnly: true,       // prevents JS access
-      secure: true,         // send only over HTTPS
-      sameSite: "strict",   // CSRF protection
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    });
-
+    // response with new accessToken
     return res.json({
       accessToken: newAccessToken,
       message: "Token refreshed successfully",
     });
-
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Internal server error" });
@@ -200,4 +188,3 @@ exports.logout = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
-
