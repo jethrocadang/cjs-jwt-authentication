@@ -6,11 +6,17 @@ const bycrypt = require("bcryptjs");
 // Services
 const jwtService = require("../services/token-service");
 const sendEmail = require("../services/email-service");
+const {
+  storeRefreshToken,
+  validateRefreshToken,
+  removeRefreshToken,
+} = require("../services/session-service");
 
 // Utilities
 const verifyEmailTemplate = require("../utils/templates/verify-email-template");
 const {
   setRefreshTokenCookie,
+  MAX_AGE,
 } = require("../utils/utility/refresh-token-cookie");
 
 //Models
@@ -38,8 +44,9 @@ exports.login = async (req, res) => {
     const accessToken = jwtService.signAccessToken(user);
     const refreshToken = jwtService.signRefreshToken(user);
 
-    // Send the refresh token through yummy HTTP-only cookies
+    // Send the refresh token through yummy HTTP-only cookieslp
     setRefreshTokenCookie(res, refreshToken);
+    storeRefreshToken(user._id, refreshToken, MAX_AGE);
 
     // Send back the user info!
     res.json({
@@ -132,7 +139,6 @@ exports.verifyEmail = async (req, res) => {
 
 exports.refreshToken = async (req, res) => {
   try {
-
     // Get the refresh token from the http-only cookies
     const refreshToken = req.cookies?.refreshToken;
 
@@ -144,9 +150,15 @@ exports.refreshToken = async (req, res) => {
     // Verify the token through the token service
     const decoded = jwtService.verifyRefreshToken(refreshToken);
 
-    // Check if the decoded token is valid 
+    // Check if the decoded token is valid
     if (!decoded) {
       return res.status(403).json({ message: "Invalid or expired token!" });
+    }
+
+    // Check if token is valid from redis and DB
+    const isValid = validateRefreshToken(decoded.sub, refreshToken);
+    if (!isValid) {
+      return res.status(403).json({ message: "Invalid or reused token!" });
     }
 
     // Create new tokens access and refresh
@@ -155,6 +167,7 @@ exports.refreshToken = async (req, res) => {
 
     // Set the refresh token in cookie
     setRefreshTokenCookie(res, newRefreshToken);
+    await storeRefreshToken(res, newRefreshToken);
 
     // response with new accessToken
     return res.json({

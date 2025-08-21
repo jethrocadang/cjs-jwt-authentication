@@ -3,15 +3,45 @@
 const jwt = require("jsonwebtoken");
 
 const signAccessToken = (user) => {
-  return jwt.sign({ id: user._id }, process.env.JWT_ACCESS_TOKEN, {
-    expiresIn: "15m",
-  });
+  return jwt.sign(
+    {
+      sub: user._id,
+      iss: process.env.BACKEND_URL,
+      aud: process.env.FRONTEND_URL,
+    },
+    process.env.JWT_ACCESS_TOKEN,
+    {
+      expiresIn: "15m",
+    }
+  );
 };
 
 const signRefreshToken = (user) => {
-  return jwt.sign({ id: user._id }, process.env.JWT_REFRESH_TOKEN, {
-    expiresIn: "7d",
-  });
+  return jwt.sign(
+    {
+      sub: user._id,
+      iss: process.env.BACKEND_URL,
+      aud: process.env.FRONTEND_URL,
+    },
+    process.env.JWT_REFRESH_TOKEN,
+    {
+      expiresIn: "7d",
+    }
+  );
+};
+
+const signEmailToken = (user) => {
+  return jwt.sign(
+    {
+      sub: user._id,
+      iss: process.env.BACKEND_URL,
+      aud: process.env.FRONTEND_URL,
+    },
+    process.env.JWT_EMAIL_TOKEN,
+    {
+      expiresIn: "15m",
+    }
+  );
 };
 
 const verifyAccessToken = (token) => {
@@ -22,14 +52,8 @@ const verifyRefreshToken = (token) => {
   return jwt.verify(token, process.env.JWT_REFRESH_TOKEN);
 };
 
-const signEmailToken = (user) => {
-  return jwt.sign({ id: user._id }, process.env.JWT_REFRESH_TOKEN, {
-    expiresIn: "15m",
-  });
-};
-
 const verifyEmailToken = (token) => {
-  return jwt.verify(token, process.env.JWT_REFRESH_TOKEN);
+  return jwt.verify(token, process.env.JWT_EMAIL_TOKEN);
 };
 
 module.exports = {
@@ -38,5 +62,5 @@ module.exports = {
   signEmailToken,
   verifyAccessToken,
   verifyRefreshToken,
-  verifyEmailToken
+  verifyEmailToken,
 };
