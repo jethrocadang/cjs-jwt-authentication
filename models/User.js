@@ -14,8 +14,10 @@ const UserSchema = mongoose.Schema(
     password: { type: String, required: true, minlength: 8, select: false, trim:true },
     roles: [{ type: mongoose.Schema.Types.ObjectId, ref: "Role" }],
     permissions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Permission" }],
+    refreshToken: [{type: mongoose.Schema.Types.ObjectId, ref: "RefreshToken"}],
     isActive: { type: Boolean, default: true },
     lastLoginAt: { type: Date },
+    emailVerifiedAt: {type: Date}
   },
   { timestamps: true }
 );

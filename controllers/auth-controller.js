@@ -20,7 +20,7 @@ const {
 } = require("../utils/utility/refresh-token-cookie");
 
 //Models
-const { User } = require("../models");
+const { User, RefreshToken } = require("../models");
 
 exports.login = async (req, res) => {
   try {
@@ -32,7 +32,7 @@ exports.login = async (req, res) => {
     if (!user) return res.status(401).json({ message: "Invalid Credentials!" });
 
     // Check if the password is correct
-    const ok = await bcrypt.compare(password, user.password);
+    const ok = await bycrypt.compare(password, user.password);
     if (!ok) return res.status(401).json({ message: "Invalid Password!" });
 
     // If all checks passed:
@@ -43,6 +43,9 @@ exports.login = async (req, res) => {
     // Sign JWT for the user
     const accessToken = jwtService.signAccessToken(user);
     const refreshToken = jwtService.signRefreshToken(user);
+
+
+
 
     // Send the refresh token through yummy HTTP-only cookieslp
     setRefreshTokenCookie(res, refreshToken);
@@ -114,15 +117,16 @@ exports.verifyEmail = async (req, res) => {
     const decoded = jwtService.verifyEmailToken(token);
 
     // Get the user _id
-    const user = await User.findById(decoded.id);
+    const user = await User.findById(decoded.sub);
+
     // Check if exists
     if (!user) return res.status(404).json({ message: "User not found!" });
     // Check if verified
-    if (user.verified)
+    if (user.emailVerifiedAt)
       return res.status(400).json({ message: "User already verfied!" });
 
     // Set status to verified if all checks passed.
-    user.verified = true;
+    user.emailVerifiedAt = Date.now();
     await user.save();
 
     //Success response.
@@ -167,7 +171,7 @@ exports.refreshToken = async (req, res) => {
 
     // Set the refresh token in cookie
     setRefreshTokenCookie(res, newRefreshToken);
-    await storeRefreshToken(res, newRefreshToken);
+    await storeRefreshToken(res, newRefreshToken, MAX_AGE);
 
     // response with new accessToken
     return res.json({
@@ -175,7 +179,10 @@ exports.refreshToken = async (req, res) => {
       message: "Token refreshed successfully",
     });
   } catch (error) {
-    console.error(error);
+    console.error(
+      "controllers/auth-controller.js.refreshToken [ERROR]:",
+      error
+    );
     return res.status(500).json({ message: "Internal server error" });
   }
 };
