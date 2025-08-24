@@ -1,14 +1,29 @@
 // services/session-service.js
-const User = require("./models/User");
-const { redis } = require("../services/perm-cache");
+const { User, RefreshToken } = require("../models");
+const { redis, set } = require("../services/perm-cache");
 
 // Save token to DB + Redis
-async function storeRefreshToken(userId, token, exp) {
+async function storeRefreshToken(refreshData) {
+  const { userId, token, exp, ipAddress, userAgent } = refreshData;
+
+  const expiresAt = new Date(Date.now() + exp * 1000);
+
+  const refreshDoc = RefreshToken.create({
+    user: userId,
+    token,
+    ipAddress,
+    userAgent,
+    expiresAt,
+  });
   // Save to DB
-  await User.findByIdAndUpdate(userId, { refreshToken: token });
+  await User.findByIdAndUpdate(userId, {
+    $push: { refreshToken: refreshDoc._id },
+  });
 
   // Save to Redis with expiry (in seconds)
-  await redis.set(`refresh:${userId}`, token, "EX", exp);
+  await set(`refresh:${userId}`, token, "EX", expiresAt);
+
+  return refreshDoc;
 }
 
 // Validate token against Redis + fallback DB

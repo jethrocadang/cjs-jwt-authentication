@@ -44,9 +44,6 @@ exports.login = async (req, res) => {
     const accessToken = jwtService.signAccessToken(user);
     const refreshToken = jwtService.signRefreshToken(user);
 
-
-
-
     // Send the refresh token through yummy HTTP-only cookieslp
     setRefreshTokenCookie(res, refreshToken);
     storeRefreshToken(user._id, refreshToken, MAX_AGE);
@@ -171,7 +168,13 @@ exports.refreshToken = async (req, res) => {
 
     // Set the refresh token in cookie
     setRefreshTokenCookie(res, newRefreshToken);
-    await storeRefreshToken(res, newRefreshToken, MAX_AGE);
+    await storeRefreshToken({
+      userId: decoded.sub,
+      token: newRefreshToken,
+      ipAddress: req.ip,
+      userAgent: req.get("User-Agent" || "Unknown"),
+      exp: MAX_AGE
+    });
 
     // response with new accessToken
     return res.json({
