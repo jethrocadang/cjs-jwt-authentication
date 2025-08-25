@@ -183,7 +183,7 @@ exports.refreshToken = async (req, res) => {
     });
   } catch (error) {
     console.error(
-      "controllers/auth-controller.js.refreshToken [ERROR]:",
+      "[ERROR]@controllers/auth-controller.js.refreshToken :",
       error
     );
     return res.status(500).json({ message: "Internal server error" });
