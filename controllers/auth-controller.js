@@ -168,6 +168,7 @@ exports.refreshToken = async (req, res) => {
 
     // Set the refresh token in cookie
     setRefreshTokenCookie(res, newRefreshToken);
+
     await storeRefreshToken({
       userId: decoded.sub,
       token: newRefreshToken,
@@ -175,6 +176,8 @@ exports.refreshToken = async (req, res) => {
       userAgent: req.get("User-Agent" || "Unknown"),
       exp: MAX_AGE
     });
+
+    
 
     // response with new accessToken
     return res.json({

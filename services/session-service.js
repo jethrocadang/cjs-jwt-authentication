@@ -32,7 +32,7 @@ async function validateRefreshToken(userId, token) {
     const refreshDoc = await RefreshToken.findOne({
       user: userId,
       token, // look for exact match
-      expiresAt: { $gt: new Date() } // not expired
+      expiresAt: { $gt: new Date() }, // not expired
     });
 
     if (!refreshDoc) return false;
@@ -52,16 +52,17 @@ async function validateRefreshToken(userId, token) {
   return stored === token;
 }
 
-
 // Remove token from Redis + DB
-async function removeRefreshToken(userId) {
+async function removeRefreshToken(userId, token) {
   // Remove from Redis
   await redis.del(`refresh:${userId}`);
 
   // Remove from RefreshToken collection
-  await RefreshToken.deleteMany({ user: userId });
+  await RefreshToken.updateOne(
+    { user: userId, token },
+    { $set: { revokedAt: new Date() } }
+  );
 }
-
 
 module.exports = {
   storeRefreshToken,
