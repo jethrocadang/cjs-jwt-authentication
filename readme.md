@@ -1,29 +1,35 @@
-🚀 Node.js Express API with JWT & Redis
+# 🚀 Node.js Express API with JWT & Redis
 
-This repository contains a Node.js REST API built with Express.js.
-It demonstrates the use of CommonJS modules, JWT authentication, and Redis caching/session management.
+This repository contains a **Node.js REST API** built with **Express.js**.  
+It demonstrates the use of **CommonJS modules**, **JWT authentication**, and **Redis caching/session management**.  
 
-📌 Features
+---
 
-Node.js (CommonJS) – backend runtime environment.
+## 📌 Features
 
-Express.js – fast, minimal, and flexible web framework.
+- **Node.js (CommonJS)** – backend runtime environment  
+- **Express.js** – fast, minimal, and flexible web framework  
+- **JWT (JSON Web Tokens)** – stateless authentication  
+- **Redis** – caching and token/session management  
+- **RESTful API** – clean and structured endpoints  
 
-JWT (JSON Web Tokens) – stateless authentication.
+---
 
-Redis – for caching and token/session management.
+## 📂 Project Structure
 
-RESTful API – clean and structured endpoints.
-
-📂 Project Structure
+```bash
 project-root/
-│── controllers/
-│── middlewares/
-│── routes/
-│── utils/
-│── app.js
-│── server.js
+│── controllers/      # Route controllers (business logic)
+│── middlewares/      # Authentication & validation middlewares
+│── routes/           # Express route definitions
+│── utils/            # Helper functions (JWT, Redis client, etc.)
+│── app.js            # Express app setup
+│── server.js         # Entry point
+│── .env              # Environment variables
 │── package.json
+│── README.md
+
+```
 
 
 ⚙️ Installation & Setup
