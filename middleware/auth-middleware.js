@@ -1,13 +1,9 @@
-// middleware/auth-middleware.js
+// middleware/authenticate-middleware.js
 
 // Packages
-const jwt = require("jsonwebtoken");
 const { redis } = require("../services/perm-cache");
 
-// Models
-const User = require("../models/user");
-
-exports.protect = async (req, res, next) => {
+exports.authenticate = async (req, res, next) => {
   try {
     // Get the authorization header
     const authHeader = req.headers.authorization;
@@ -35,21 +31,23 @@ exports.protect = async (req, res, next) => {
 
 exports.authorize = async ({ roles = [], permissions = [] }) => {
   return (req, res, next) => {
+    
+    // Check if it is a valid user
     if (!req.user) {
       return res.status(401).json({ message: "Unauthorized!" });
     }
 
+    // Check if there is a role and if not proceed to permissions.
     if (roles.length && !roles.includes(req.user.role)) {
       return res
         .status(403)
         .json({ message: "You do not have the required role!" });
     }
 
+    // Check if there is permissions
     if (permissions.length) {
       const userPerms = req.user.permissions || [];
-      const hasPermission = permissions.every((p) =>
-        userPerms.includes(p)
-      );
+      const hasPermission = permissions.every((p) => userPerms.includes(p));
       if (!hasPermission) {
         return res
           .status(403)
